@@ -20,6 +20,15 @@
   <div id="error-msg"></div>
 
   <div id="content" style="display:none">
+    <div class="roles-section" id="roles-section" style="display:none">
+      <div class="roles-toolbar">
+        <span class="roles-title">🎭 ROLES <span class="roles-total" id="roles-total"></span></span>
+        <input type="text" id="roles-search" class="roles-search" placeholder="🔍 Filtrar roles..." autocomplete="off" />
+      </div>
+      <div id="roles-groups"></div>
+      <div class="roles-empty" id="roles-empty" style="display:none">Nenhuma role corresponde ao filtro.</div>
+    </div>
+
     <div class="fields-grid" id="fields-grid"></div>
     <button class="raw-toggle" id="raw-toggle">
       { } VER JSON COMPLETO

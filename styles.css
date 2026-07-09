@@ -312,6 +312,200 @@ input::placeholder { color: var(--muted); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== Roles section (decode page) ===== */
+.roles-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.roles-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.roles-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.roles-total {
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.roles-search {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  width: 240px;
+  max-width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.roles-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
+}
+
+.roles-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.roles-group:last-child { margin-bottom: 0; }
+
+.roles-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: none;
+  padding: 7px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.roles-group-header:hover { color: var(--accent); }
+
+.roles-group-name { flex: 1; }
+
+.roles-arrow {
+  font-size: 8px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+
+.roles-group.open .roles-arrow,
+.roles-group.filter-open .roles-arrow { transform: rotate(90deg); }
+
+.roles-group-body {
+  display: none;
+  padding: 6px 12px 10px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.roles-group.open .roles-group-body,
+.roles-group.filter-open .roles-group-body {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+/* ===== Árvore de roles: sistema → módulo → funcionalidade ===== */
+.tree-node { margin-top: 2px; }
+
+.tree-children {
+  margin-left: 5px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+
+.tree-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 0;
+}
+
+.tree-system > .tree-label { color: var(--accent); }
+.tree-module > .tree-label { color: var(--accent2); }
+
+.tree-leaf {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+  text-align: left;
+  word-break: break-all;
+  transition: color 0.15s, background 0.15s;
+}
+
+.tree-leaf:hover {
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.tree-leaf.copied { color: var(--success); }
+.tree-leaf.copied::after {
+  content: '✓ copiado';
+  color: var(--success);
+  font-size: 9px;
+  margin-left: 8px;
+  opacity: 0.8;
+}
+
+/* Traço horizontal conectando cada item à linha vertical da árvore */
+.tree-children > .tree-node > .tree-label::before,
+.tree-children > .tree-leaf::before,
+.tree-module-flat > .tree-leaf::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--border);
+}
+
+.roles-count {
+  background: rgba(123, 97, 255, 0.12);
+  color: var(--accent2);
+  border: 1px solid rgba(123, 97, 255, 0.25);
+  border-radius: 20px;
+  padding: 0 6px;
+  font-size: 8px;
+  font-weight: 400;
+}
+
+.role-hl {
+  color: var(--warning);
+  background: rgba(255, 209, 102, 0.12);
+  border-radius: 2px;
+}
+
+.roles-empty {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
 /* ===== Fields grid (decode page) ===== */
 .fields-grid {
   display: grid;
