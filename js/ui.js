@@ -49,6 +49,7 @@ export class UI {
     if (fields.client_id) document.getElementById('client-id').value = fields.client_id;
     if (fields.token_url) document.getElementById('token-url').value = fields.token_url;
     if (fields.password) document.getElementById('password').value = fields.password;
+    if (fields.scope) document.getElementById('scope').value = fields.scope;
     if (fields.remember_password !== undefined) {
       document.getElementById('remember-password').checked = fields.remember_password;
     }
@@ -60,6 +61,7 @@ export class UI {
       password: document.getElementById('password').value,
       clientId: document.getElementById('client-id').value.trim(),
       tokenUrl: document.getElementById('token-url').value.trim(),
+      scope: document.getElementById('scope').value.trim(),
       rememberPassword: document.getElementById('remember-password').checked
     };
   }
