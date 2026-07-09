@@ -1,10 +1,11 @@
-export async function fetchToken(tokenUrl, clientId, username, password) {
+export async function fetchToken(tokenUrl, clientId, username, password, scope) {
   const body = new URLSearchParams({
     grant_type: 'password',
     client_id: clientId,
     username,
     password
   });
+  if (scope) body.append('scope', scope);
 
   const response = await fetch(tokenUrl, {
     method: 'POST',
