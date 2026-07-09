@@ -13,14 +13,15 @@ export function setStorage(data) {
 }
 
 export async function loadSavedCredentials() {
-  return getStorage(['username', 'password', 'remember_password', 'client_id', 'token_url', 'last_token_data']);
+  return getStorage(['username', 'password', 'remember_password', 'client_id', 'token_url', 'scope', 'last_token_data']);
 }
 
-export async function saveCredentials(username, clientId, tokenUrl, rememberPassword, password) {
+export async function saveCredentials(username, clientId, tokenUrl, rememberPassword, password, scope) {
   return setStorage({
     username,
     client_id: clientId,
     token_url: tokenUrl,
+    scope,
     remember_password: rememberPassword,
     password: rememberPassword ? password : ''
   });

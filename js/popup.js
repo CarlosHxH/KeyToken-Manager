@@ -24,6 +24,7 @@ ui.bindDecode(handleDecode);
     username: saved.username,
     client_id: saved.client_id,
     token_url: saved.token_url,
+    scope: saved.scope,
     password: saved.password,
     remember_password: saved.remember_password
   });
@@ -46,7 +47,7 @@ async function handleFetch() {
     return;
   }
 
-  await saveCredentials(creds.username, creds.clientId, creds.tokenUrl, creds.rememberPassword, creds.password);
+  await saveCredentials(creds.username, creds.clientId, creds.tokenUrl, creds.rememberPassword, creds.password, creds.scope);
 
   ui.setStatus('loading');
   ui.setFetching(true);
@@ -54,7 +55,7 @@ async function handleFetch() {
   timer.clear();
 
   try {
-    const result = await apiFetchToken(creds.tokenUrl, creds.clientId, creds.username, creds.password);
+    const result = await apiFetchToken(creds.tokenUrl, creds.clientId, creds.username, creds.password, creds.scope);
 
     await saveTokenData(result.accessToken, result.expiresIn, result.tokenType, result.obtainedAt, result.expiresAt);
 
