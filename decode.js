@@ -64,26 +64,51 @@ function buildHierarchy(roles) {
   return systems;
 }
 
-// Preenche o chip destacando o trecho que casa com o filtro
-function setChipContent(chip, text, filter) {
+// Quebra o filtro em termos (separados por espaço), todos em minúsculas
+function parseTerms(filter) {
+  return filter.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function containsAll(text, terms) {
+  var lower = text.toLowerCase();
+  return terms.every(function (t) { return lower.indexOf(t) !== -1; });
+}
+
+// Preenche o chip destacando todos os trechos que casam com os termos
+function setChipContent(chip, text, terms) {
   chip.textContent = '';
-  if (!filter) {
+  if (!terms || !terms.length) {
     chip.textContent = text;
     return;
   }
+
+  // Marca cada caractere coberto por algum termo e agrupa em trechos
   var lower = text.toLowerCase();
-  var idx = lower.indexOf(filter);
+  var marked = new Array(text.length);
+  terms.forEach(function (term) {
+    var idx = lower.indexOf(term);
+    while (idx !== -1) {
+      for (var i = idx; i < idx + term.length; i++) marked[i] = true;
+      idx = lower.indexOf(term, idx + 1);
+    }
+  });
+
   var pos = 0;
-  while (idx !== -1) {
-    if (idx > pos) chip.appendChild(document.createTextNode(text.slice(pos, idx)));
-    var mark = document.createElement('span');
-    mark.className = 'role-hl';
-    mark.textContent = text.slice(idx, idx + filter.length);
-    chip.appendChild(mark);
-    pos = idx + filter.length;
-    idx = lower.indexOf(filter, pos);
+  while (pos < text.length) {
+    var hl = Boolean(marked[pos]);
+    var end = pos;
+    while (end < text.length && Boolean(marked[end]) === hl) end++;
+    var piece = text.slice(pos, end);
+    if (hl) {
+      var mark = document.createElement('span');
+      mark.className = 'role-hl';
+      mark.textContent = piece;
+      chip.appendChild(mark);
+    } else {
+      chip.appendChild(document.createTextNode(piece));
+    }
+    pos = end;
   }
-  if (pos < text.length) chip.appendChild(document.createTextNode(text.slice(pos)));
 }
 
 function copyRole(chip, role) {
@@ -199,7 +224,7 @@ function renderGroup(group, container) {
         leaf.type = 'button';
         leaf.className = 'tree-leaf';
         leaf.title = entry.role + ' — clique para copiar';
-        setChipContent(leaf, entry.text, '');
+        setChipContent(leaf, entry.text, null);
         leaf.addEventListener('click', function () { copyRole(leaf, entry.role); });
         leafContainer.appendChild(leaf);
         return { el: leaf, role: entry.role, text: entry.text };
@@ -237,9 +262,18 @@ function renderRoles(groups) {
   totalEl.textContent = total;
   section.style.display = 'block';
 
-  searchEl.addEventListener('input', function () {
-    var filter = searchEl.value.trim().toLowerCase();
+  var clearEl    = document.getElementById('roles-search-clear');
+  var fullNameEl = document.getElementById('roles-fullname');
+  var expandEl   = document.getElementById('roles-expand');
+  var copyEl     = document.getElementById('roles-copy');
+  var showFull   = false;
+
+  function applyFilter() {
+    var terms = parseTerms(searchEl.value);
+    var filtering = terms.length > 0;
     var totalVisible = 0;
+
+    clearEl.style.display = searchEl.value ? '' : 'none';
 
     refs.forEach(function (group) {
       var groupVisible = 0;
@@ -251,14 +285,19 @@ function renderRoles(groups) {
         system.modules.forEach(function (module) {
           var moduleVisible = 0;
           module.chips.forEach(function (chip) {
-            var match = !filter || chip.role.toLowerCase().indexOf(filter) !== -1;
+            // Busca sempre no nome completo da role
+            var match = !filtering || containsAll(chip.role, terms);
             chip.el.style.display = match ? '' : 'none';
+            chip.visible = match;
             if (match) {
-              setChipContent(chip.el, chip.text, filter);
+              // Exibe o nome completo quando pedido ou quando o casamento
+              // envolve partes (sistema/módulo) fora do texto curto
+              var useFull = showFull || (filtering && !containsAll(chip.text, terms));
+              setChipContent(chip.el, useFull ? chip.role : chip.text, terms);
               moduleVisible++;
             }
           });
-          module.countEl.textContent = filter
+          module.countEl.textContent = filtering
             ? moduleVisible + '/' + module.chips.length
             : module.chips.length;
           module.el.style.display = moduleVisible ? '' : 'none';
@@ -266,25 +305,83 @@ function renderRoles(groups) {
           systemTotal   += module.chips.length;
         });
 
-        system.countEl.textContent = filter
+        system.countEl.textContent = filtering
           ? systemVisible + '/' + systemTotal
           : systemTotal;
         system.el.style.display = systemVisible ? '' : 'none';
         groupVisible += systemVisible;
       });
 
-      group.countEl.textContent = filter
+      group.countEl.textContent = filtering
         ? groupVisible + '/' + group.total
         : group.total;
-      group.el.style.display = (groupVisible || !filter) ? '' : 'none';
+      group.el.style.display = (groupVisible || !filtering) ? '' : 'none';
       // Com filtro ativo, expande os grupos que têm resultado
-      group.el.classList.toggle('filter-open', Boolean(filter) && groupVisible > 0);
+      group.el.classList.toggle('filter-open', filtering && groupVisible > 0);
       totalVisible += groupVisible;
     });
 
-    totalEl.textContent = filter ? totalVisible + '/' + total : total;
+    totalEl.textContent = filtering ? totalVisible + '/' + total : total;
     emptyEl.style.display = totalVisible ? 'none' : 'block';
+    copyEl.disabled = totalVisible === 0;
+  }
+
+  function clearFilter() {
+    searchEl.value = '';
+    applyFilter();
+    searchEl.focus();
+  }
+
+  searchEl.addEventListener('input', applyFilter);
+  searchEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') clearFilter();
   });
+  clearEl.addEventListener('click', clearFilter);
+
+  // Atalho "/" foca o filtro (fora de campos de texto)
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    e.preventDefault();
+    searchEl.focus();
+    searchEl.select();
+  });
+
+  fullNameEl.addEventListener('click', function () {
+    showFull = !showFull;
+    fullNameEl.classList.toggle('active', showFull);
+    fullNameEl.setAttribute('aria-pressed', String(showFull));
+    applyFilter();
+  });
+
+  expandEl.addEventListener('click', function () {
+    var anyClosed = refs.some(function (g) { return !g.el.classList.contains('open'); });
+    refs.forEach(function (g) { g.el.classList.toggle('open', anyClosed); });
+    expandEl.textContent = anyClosed ? '⊟ Recolher' : '⊞ Expandir';
+  });
+
+  copyEl.addEventListener('click', function () {
+    var roles = [];
+    refs.forEach(function (g) {
+      if (g.el.style.display === 'none') return;
+      g.systems.forEach(function (s) {
+        s.modules.forEach(function (m) {
+          m.chips.forEach(function (c) {
+            if (c.visible !== false && roles.indexOf(c.role) === -1) roles.push(c.role);
+          });
+        });
+      });
+    });
+    if (!roles.length || !navigator.clipboard) return;
+    navigator.clipboard.writeText(roles.join('\n')).then(function () {
+      copyEl.textContent = '✅ ' + roles.length + ' copiada(s)';
+      setTimeout(function () { copyEl.textContent = '📋 Copiar visíveis'; }, 1500);
+    }).catch(function () {});
+  });
+
+  // Grupo único já começa aberto
+  if (refs.length === 1) refs[0].el.classList.add('open');
 }
 
 // ── Render principal ──────────────────────────────────────────

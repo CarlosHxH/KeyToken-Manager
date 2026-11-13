@@ -23,8 +23,18 @@
     <div class="roles-section" id="roles-section" style="display:none">
       <div class="roles-toolbar">
         <span class="roles-title">🎭 ROLES <span class="roles-total" id="roles-total"></span></span>
-        <input type="text" id="roles-search" class="roles-search" placeholder="🔍 Filtrar roles..." autocomplete="off" />
+        <div class="roles-actions">
+          <button type="button" class="roles-btn" id="roles-fullname" aria-pressed="false" title="Exibir o nome completo de cada role">🏷️ Nome completo</button>
+          <button type="button" class="roles-btn" id="roles-expand" title="Expandir/recolher todos os grupos">⊞ Expandir</button>
+          <button type="button" class="roles-btn" id="roles-copy" title="Copiar as roles visíveis (uma por linha)">📋 Copiar visíveis</button>
+        </div>
       </div>
+      <div class="roles-search-wrap">
+        <span class="roles-search-icon">🔍</span>
+        <input type="text" id="roles-search" class="roles-search" placeholder="Filtrar por nome completo ou parte (ex.: ROLE_SROP_BOLETIM ou srop visualizar)" autocomplete="off" spellcheck="false" />
+        <button type="button" class="roles-search-clear" id="roles-search-clear" title="Limpar filtro (Esc)" style="display:none">✕</button>
+      </div>
+      <div class="roles-hint">💡 Termos separados por espaço são combinados · <kbd>/</kbd> foca o filtro · <kbd>Esc</kbd> limpa · clique na role para copiar</div>
       <div id="roles-groups"></div>
       <div class="roles-empty" id="roles-empty" style="display:none">Nenhuma role corresponde ao filtro.</div>
     </div>
