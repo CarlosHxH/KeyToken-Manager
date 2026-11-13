@@ -18,6 +18,9 @@ ui.bindPasswordEnter(handleFetch);
 ui.bindCopy(() => ui.copyToken());
 ui.bindDecode(handleDecode);
 
+// 🏷️ Versão instalada, lida do manifest.json
+document.getElementById('version-label').textContent = 'v' + browserAPI.runtime.getManifest().version;
+
 (async function init() {
   const saved = await loadSavedCredentials();
   ui.setCredentials({
