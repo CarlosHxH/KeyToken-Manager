@@ -128,6 +128,34 @@ function makeCount(value) {
   return count;
 }
 
+// Cabeçalho clicável de um nó da árvore (sistema/módulo): alterna "collapsed"
+function makeTreeToggle(nodeEl, text, countEl) {
+  var title = document.createElement('button');
+  title.type = 'button';
+  title.className = 'tree-label tree-toggle';
+  title.setAttribute('aria-expanded', 'true');
+
+  var arrow = document.createElement('span');
+  arrow.className = 'tree-arrow';
+  arrow.textContent = '▶';
+
+  var label = document.createElement('span');
+  label.textContent = text;
+
+  title.appendChild(arrow);
+  title.appendChild(label);
+  title.appendChild(countEl);
+  title.addEventListener('click', function () {
+    setNodeCollapsed(nodeEl, !nodeEl.classList.contains('collapsed'));
+  });
+  return title;
+}
+
+function setNodeCollapsed(nodeEl, collapsed) {
+  nodeEl.classList.toggle('collapsed', collapsed);
+  nodeEl.firstChild.setAttribute('aria-expanded', String(!collapsed));
+}
+
 // Monta um grupo colapsável (fonte: realm_access / resource_access · client)
 // e devolve as referências necessárias para o filtro
 function renderGroup(group, container) {
@@ -161,6 +189,7 @@ function renderGroup(group, container) {
   body.className = 'roles-group-body';
 
   var systemRefs = [];
+  var nodes = [];
 
   Object.keys(systems).sort().forEach(function (systemName) {
     var modules = systems[systemName];
@@ -168,20 +197,13 @@ function renderGroup(group, container) {
     var systemEl = document.createElement('div');
     systemEl.className = 'tree-node tree-system';
 
-    var systemTitle = document.createElement('div');
-    systemTitle.className = 'tree-label';
-
-    var systemLabel = document.createElement('span');
-    systemLabel.textContent = systemName;
-
     var systemTotal = Object.keys(modules).reduce(function (sum, m) {
       return sum + modules[m].length;
     }, 0);
     var systemCount = makeCount(systemTotal);
 
-    systemTitle.appendChild(systemLabel);
-    systemTitle.appendChild(systemCount);
-    systemEl.appendChild(systemTitle);
+    systemEl.appendChild(makeTreeToggle(systemEl, systemName, systemCount));
+    nodes.push(systemEl);
 
     var systemChildren = document.createElement('div');
     systemChildren.className = 'tree-children';
@@ -199,15 +221,8 @@ function renderGroup(group, container) {
         moduleEl = document.createElement('div');
         moduleEl.className = 'tree-node tree-module';
 
-        var moduleTitle = document.createElement('div');
-        moduleTitle.className = 'tree-label';
-
-        var moduleLabel = document.createElement('span');
-        moduleLabel.textContent = moduleName;
-
-        moduleTitle.appendChild(moduleLabel);
-        moduleTitle.appendChild(moduleCount);
-        moduleEl.appendChild(moduleTitle);
+        moduleEl.appendChild(makeTreeToggle(moduleEl, moduleName, moduleCount));
+        nodes.push(moduleEl);
 
         leafContainer = document.createElement('div');
         leafContainer.className = 'tree-children';
@@ -242,7 +257,7 @@ function renderGroup(group, container) {
   groupEl.appendChild(body);
   container.appendChild(groupEl);
 
-  return { el: groupEl, countEl: groupCount, systems: systemRefs, total: group.roles.length };
+  return { el: groupEl, countEl: groupCount, systems: systemRefs, nodes: nodes, total: group.roles.length };
 }
 
 function renderRoles(groups) {
@@ -321,6 +336,8 @@ function renderRoles(groups) {
       totalVisible += groupVisible;
     });
 
+    // Com filtro ativo, nós recolhidos são exibidos para mostrar os resultados
+    section.classList.toggle('filtering', filtering);
     totalEl.textContent = filtering ? totalVisible + '/' + total : total;
     emptyEl.style.display = totalVisible ? 'none' : 'block';
     copyEl.disabled = totalVisible === 0;
@@ -355,11 +372,29 @@ function renderRoles(groups) {
     applyFilter();
   });
 
+  function hasClosed() {
+    return refs.some(function (g) {
+      return !g.el.classList.contains('open') ||
+        g.nodes.some(function (n) { return n.classList.contains('collapsed'); });
+    });
+  }
+
+  function updateExpandLabel() {
+    expandEl.textContent = hasClosed() ? '⊞ Expandir' : '⊟ Recolher';
+  }
+
+  // Expande tudo se algo estiver recolhido; senão recolhe tudo
   expandEl.addEventListener('click', function () {
-    var anyClosed = refs.some(function (g) { return !g.el.classList.contains('open'); });
-    refs.forEach(function (g) { g.el.classList.toggle('open', anyClosed); });
-    expandEl.textContent = anyClosed ? '⊟ Recolher' : '⊞ Expandir';
+    var expand = hasClosed();
+    refs.forEach(function (g) {
+      g.el.classList.toggle('open', expand);
+      g.nodes.forEach(function (n) { setNodeCollapsed(n, !expand); });
+    });
+    updateExpandLabel();
   });
+
+  // Toggles individuais (grupo/sistema/módulo) atualizam o rótulo do botão
+  container.addEventListener('click', updateExpandLabel);
 
   copyEl.addEventListener('click', function () {
     var roles = [];
@@ -382,6 +417,7 @@ function renderRoles(groups) {
 
   // Grupo único já começa aberto
   if (refs.length === 1) refs[0].el.classList.add('open');
+  updateExpandLabel();
 }
 
 // ── Render principal ──────────────────────────────────────────

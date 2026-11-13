@@ -517,6 +517,30 @@ input::placeholder { color: var(--muted); }
   padding: 2px 0;
 }
 
+.tree-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.tree-toggle:hover { background: rgba(255, 255, 255, 0.03); }
+
+.tree-arrow {
+  font-size: 7px;
+  color: var(--muted);
+  transition: transform 0.2s;
+  transform: rotate(90deg);
+}
+
+/* Nó recolhido (ignorado enquanto há filtro ativo) */
+.roles-section:not(.filtering) .tree-node.collapsed > .tree-children { display: none; }
+.roles-section:not(.filtering) .tree-node.collapsed > .tree-label .tree-arrow { transform: none; }
+
 .tree-system > .tree-label { color: var(--accent); }
 .tree-module > .tree-label { color: var(--accent2); }
 
