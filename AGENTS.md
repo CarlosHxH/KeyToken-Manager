@@ -11,6 +11,7 @@ Chrome/Firefox extension (Manifest V3) that obtains and manages Keycloak OIDC ac
   - `decode.js` — standalone script loaded by `decode.html` (classic script, not a module)
 - **Browser API shim:** both popup and decode use `const browserAPI = (typeof browser !== 'undefined') ? browser : chrome;` for Chrome/Firefox compat.
 - `manifest.json` is v3, no `background.js` (not needed).
+- **Release:** `.github/workflows/release.yml` runs `scripts/pack_crx.py` on push to `main`, publishing `.crx` + `updates.xml` to GitHub Pages (`update_url` in manifest). Bump `version` in `manifest.json` for clients to auto-update. Signing key lives only in the `CRX_PRIVATE_KEY` secret.
 
 ## Commands / verification
 - No test, lint, or typecheck tooling exists.

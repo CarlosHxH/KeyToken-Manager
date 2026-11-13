@@ -1,0 +1,81 @@
+# 📦 Empacota a extensão (.crx + updates.xml) e publica no GitHub Pages
+# a cada push na main. O Chrome consulta o updates.xml (update_url do
+# manifest.json) e atualiza sozinho quando a "version" do manifest aumenta.
+name: Release CRX
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pack.outputs.version }}
+      extension_id: ${{ steps.pack.outputs.extension_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔑 Restaura a chave privada
+        env:
+          CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          if [ -z "$CRX_PRIVATE_KEY" ]; then
+            echo "::error::Secret CRX_PRIVATE_KEY não configurado (veja o README)."
+            exit 1
+          fi
+          printf '%s\n' "$CRX_PRIVATE_KEY" > "$RUNNER_TEMP/key.pem"
+
+      - name: 📦 Empacota .crx e gera updates.xml
+        id: pack
+        run: |
+          BASE_URL="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}"
+          python3 scripts/pack_crx.py \
+            --key "$RUNNER_TEMP/key.pem" \
+            --out dist \
+            --crx-url "$BASE_URL/keytoken-manager.crx"
+          rm -f "$RUNNER_TEMP/key.pem"
+
+      - name: 📝 Página de download
+        run: |
+          cat > dist/index.html <<EOF
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>KeyToken Manager</title>
+          <h1>🔐 KeyToken Manager v${{ steps.pack.outputs.version }}</h1>
+          <p>ID da extensão: <code>${{ steps.pack.outputs.extension_id }}</code></p>
+          <ul>
+            <li><a href="keytoken-manager.crx">keytoken-manager.crx</a></li>
+            <li><a href="keytoken-manager.zip">keytoken-manager.zip</a> (para "Carregar sem compactação")</li>
+            <li><a href="updates.xml">updates.xml</a></li>
+          </ul>
+          EOF
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: ✅ Resumo
+        run: |
+          echo "### 📦 KeyToken Manager v${{ needs.build.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "ID da extensão: \`${{ needs.build.outputs.extension_id }}\`" >> "$GITHUB_STEP_SUMMARY"
