@@ -71,6 +71,7 @@ python scripts/pack_crx.py --key keytoken.pem --out dist \
   --crx-url https://carloshxh.github.io/KeyToken-Manager/keytoken-manager.crx
 ```
 
+
 ### Instalação nos computadores dos usuários
 
 No Windows e no macOS, o Chrome **bloqueia** `.crx` de fora da Web Store instalados manualmente. A forma suportada é via **política corporativa** (`ExtensionInstallForcelist`), que instala e mantém a extensão atualizada. Exemplo `.reg` para Windows (troque `<ID>` pelo ID da extensão):
